@@ -1,5 +1,7 @@
 import asyncio
 import httpx
+import sys
+import os
 from typing import List, Dict, Any
 from mcp.server.fastmcp import FastMCP, Context
 
@@ -85,4 +87,33 @@ Use the get_liquidity_pools tool to fetch the data and provide:
 
 # Main execution
 if __name__ == "__main__":
-    mcp.run()
+    # Parse command line arguments for transport type
+    transport = "stdio"  # default
+    host = "127.0.0.1"
+    port = 8000
+
+    # Check for command line arguments
+    if len(sys.argv) > 1:
+        if "--transport" in sys.argv:
+            transport_index = sys.argv.index("--transport") + 1
+            if transport_index < len(sys.argv):
+                transport = sys.argv[transport_index]
+
+    # Override with environment variables if set (for Docker)
+    if os.getenv("FASTMCP_TRANSPORT"):
+        transport = os.getenv("FASTMCP_TRANSPORT")
+    if os.getenv("FASTMCP_HOST"):
+        host = os.getenv("FASTMCP_HOST")
+    if os.getenv("FASTMCP_PORT"):
+        port = int(os.getenv("FASTMCP_PORT"))
+
+    print(f"Starting Liquidity Pools MCP Server with {transport} transport on {host}:{port}")
+
+    # Configure server based on transport
+    if transport == "streamable-http":
+        # Set up FastMCP for HTTP transport
+        mcp.settings.host = host
+        mcp.settings.port = port
+
+    # Run the server
+    mcp.run(transport=transport)

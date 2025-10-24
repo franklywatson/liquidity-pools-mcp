@@ -1,0 +1,27 @@
+services:
+  liquidity-pools-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: liquidity-pools-mcp:latest
+    container_name: liquidity-pools-mcp
+    ports:
+      - "9889:9889"
+    environment:
+      - FASTMCP_HOST=0.0.0.0
+      - FASTMCP_PORT=9889
+      - FASTMCP_DEBUG=false
+      - FASTMCP_LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:9889/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -d '{}' | grep -E '^[234][0-9][0-9]$' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
